@@ -32,6 +32,7 @@ private:
 	const char* _weather;
 	const char* _vehicle;
 	int width, height;
+	float _cameraYaw;
 
 	bool vehicles;
 	bool peds;

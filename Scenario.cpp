@@ -16,6 +16,7 @@ void Scenario::parseScenarioConfig(const Value& sc, bool setDefaults) {
 	const Value& weather = sc["weather"];
 	const Value& vehicle = sc["vehicle"];
 	const Value& drivingMode = sc["drivingMode"];
+	const Value& cameraYaw = sc["cameraYaw"];
 
 	if (location.IsArray()) {
 		if (!location[0].IsNull()) x = location[0].GetFloat();
@@ -46,6 +47,9 @@ void Scenario::parseScenarioConfig(const Value& sc, bool setDefaults) {
 
 	if (!vehicle.IsNull()) _vehicle = vehicle.GetString();
 	else if (setDefaults) _vehicle = vehicleList[rand() % 3];
+
+	if (!cameraYaw.IsNull()) _cameraYaw = - cameraYaw.GetFloat();
+	else if (setDefaults) _cameraYaw = 0;
 
 	if (drivingMode.IsArray()) {
 		if (!drivingMode[0].IsNull()) _drivingMode = drivingMode[0].GetInt();
@@ -179,14 +183,14 @@ void Scenario::buildScenario() {
 
 	GAMEPLAY::SET_WEATHER_TYPE_NOW_PERSIST((char*)_weather);
 
-	rotation = ENTITY::GET_ENTITY_ROTATION(vehicle, 1);
+	rotation = ENTITY::GET_ENTITY_ROTATION(vehicle, 2);
 	CAM::DESTROY_ALL_CAMS(TRUE);
 	camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
 	if (strcmp(_vehicle, "packer") == 0) CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0, 2.35, 1.7, TRUE);
 	else CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0, 0.5, 0.8, TRUE);
 	CAM::SET_CAM_FOV(camera, 60);
 	CAM::SET_CAM_ACTIVE(camera, TRUE);
-	CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 1);
+	CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z + _cameraYaw, 2);
 	CAM::SET_CAM_INHERIT_ROLL_VEHICLE(camera, TRUE);
 	CAM::RENDER_SCRIPT_CAMS(TRUE, FALSE, 0, TRUE, TRUE);
 
@@ -230,8 +234,8 @@ void Scenario::run() {
 	if (running) {
 		std::clock_t now = std::clock();
 
-		Vector3 rotation = ENTITY::GET_ENTITY_ROTATION(vehicle, 1);
-		CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 1);
+		Vector3 rotation = ENTITY::GET_ENTITY_ROTATION(vehicle, 2);
+		CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z + _cameraYaw, 2);
 
 		if (_drivingMode < 0) {
 			CONTROLS::_SET_CONTROL_NORMAL(27, 71, currentThrottle); //[0,1]
