@@ -10,4 +10,5 @@
 #include "types.h"
 #include "enums.h"
 
+void start_run(DWORD key, WORD repeats, BYTE scanCode, BOOL isExtended, BOOL isWithAlt, BOOL wasDownBefore, BOOL isUpNow);
 void ScriptMain();

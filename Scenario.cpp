@@ -6,125 +6,54 @@
 #include "Rewarders\SpeedRewarder.h"
 #include "defaults.h"
 #include <time.h>
+#include <fstream>
 
 char* Scenario::weatherList[14] = { "CLEAR", "EXTRASUNNY", "CLOUDS", "OVERCAST", "RAIN", "CLEARING", "THUNDER", "SMOG", "FOGGY", "XMAS", "SNOWLIGHT", "BLIZZARD", "NEUTRAL", "SNOW" };
 char* Scenario::vehicleList[3] = { "blista", "voltic", "packer" };
 
-void Scenario::parseScenarioConfig(const Value& sc, bool setDefaults) {
-	const Value& location = sc["location"];
-	const Value& time = sc["time"];
-	const Value& weather = sc["weather"];
-	const Value& vehicle = sc["vehicle"];
-	const Value& drivingMode = sc["drivingMode"];
-	const Value& cameraYaw = sc["cameraYaw"];
+void Scenario::parseScenarioConfig() {
+	x = 4000;
+	y = 4000;
 
-	if (location.IsArray()) {
-		if (!location[0].IsNull()) x = location[0].GetFloat();
-		else if (setDefaults) x = 5000 * ((float)rand() / RAND_MAX) - 2500;
+	hour = 14;
+	minute = 0;
 
-		if (!location[1].IsNull()) y = location[1].GetFloat(); 
-		else if (setDefaults) y = 8000 * ((float)rand() / RAND_MAX) - 2000;
-	}
-	else if (setDefaults) {
-		x = 5000 * ((float)rand() / RAND_MAX) - 2500;
-		y = 8000 * ((float)rand() / RAND_MAX) - 2000;
-	}
+	_weather = "CLEAR";
 
-	if (time.IsArray()) {
-		if (!time[0].IsNull()) hour = time[0].GetInt();
-		else if (setDefaults) hour = rand() % 24;
+	_vehicle = "voltic";
 
-		if (!time[1].IsNull()) minute = time[1].GetInt();
-		else if (setDefaults) minute = rand() % 60;
-	}
-	else if (setDefaults) {
-		hour = rand() % 24;
-		minute = rand() % 60;
-	}
+	camera_direction = 0;
 
-	if (!weather.IsNull()) _weather = weather.GetString();
-	else if (setDefaults) _weather = weatherList[rand() % 14];
-
-	if (!vehicle.IsNull()) _vehicle = vehicle.GetString();
-	else if (setDefaults) _vehicle = vehicleList[rand() % 3];
-
-	if (!cameraYaw.IsNull()) _cameraYaw = - cameraYaw.GetFloat();
-	else if (setDefaults) _cameraYaw = 0;
-
-	if (drivingMode.IsArray()) {
-		if (!drivingMode[0].IsNull()) _drivingMode = drivingMode[0].GetInt();
-		else if (setDefaults)  _drivingMode = rand() % 4294967296;
-		if (drivingMode[1].IsNull()) _setSpeed = drivingMode[1].GetFloat(); 
-		else if (setDefaults) _setSpeed = 1.0*(rand() % 20);
-	}
-	else if (setDefaults) {
-		_drivingMode = -1;
-	}
+	_drivingMode = 786603;
 }
 
-void Scenario::parseDatasetConfig(const Value& dc, bool setDefaults) {
-	if (!dc["rate"].IsNull()) rate = dc["rate"].GetInt();
-	else if (setDefaults) rate = _RATE_;
+void Scenario::parseDatasetConfig() {
+	rate = 5;
 	
-	if (!dc["frame"].IsNull()) {
-		if (!dc["frame"][0].IsNull()) width = dc["frame"][0].GetInt();
-		else if (setDefaults) width = _WIDTH_;
+	width = 320;
+	height = 160;
 
-		if (!dc["frame"][1].IsNull()) height = dc["frame"][1].GetInt();
-		else if (setDefaults) height = _HEIGHT_;
-	}
-	else if (setDefaults) {
-		width = _WIDTH_;
-		height = _HEIGHT_;
-	}	
+	vehicles = true;
 
-	if (!dc["vehicles"].IsNull()) vehicles = dc["vehicles"].GetBool();
-	else if (setDefaults) vehicles = _VEHICLES_;
+	peds = true;
 
-	if (!dc["peds"].IsNull()) peds = dc["peds"].GetBool();
-	else if (setDefaults) peds = _PEDS_;
+	trafficSigns = _TRAFFIC_SIGNS_;
 
-	if (!dc["trafficSigns"].IsNull()) trafficSigns = dc["trafficSigns"].GetBool();
-	else if (setDefaults) trafficSigns = _TRAFFIC_SIGNS_;
+	direction = _DIRECTION_;
 
-	if (!dc["direction"].IsNull()) {
-		if (!dc["direction"][0].IsNull()) dir.x = dc["direction"][0].GetFloat();
-		else if (setDefaults) direction = _DIRECTION_;
+	reward = _REWARD_;
+		
+	throttle = true;
+	brake = true;
+	steering = true;
+	
+	speed = true;
+	yawRate = true;
+	drivingMode = _DRIVING_MODE_;
 
-		if (!dc["direction"][1].IsNull()) dir.y = dc["direction"][1].GetFloat();
-		else if (setDefaults) direction = _DIRECTION_;
-
-		if (!dc["direction"][2].IsNull()) dir.z = dc["direction"][2].GetFloat();
-		else if (setDefaults) direction = _DIRECTION_;
-	}
-	else if (setDefaults) direction = _DIRECTION_;
-
-	if (dc["reward"].IsArray()) {
-		if (dc["reward"][0].IsFloat() && dc["reward"][1].IsFloat()) {
-			rewarder = new GeneralRewarder((char*)(GetCurrentModulePath() + "paths.xml").c_str(), dc["reward"][0].GetFloat(), dc["reward"][1].GetFloat());
-			reward = true;
-		}
-		else if (setDefaults) reward = _REWARD_;
-	}
-	else if (setDefaults) reward = _REWARD_;
-
-	if (!dc["throttle"].IsNull()) throttle = dc["throttle"].GetBool();
-	else if (setDefaults) throttle = _THROTTLE_;
-	if (!dc["brake"].IsNull()) brake = dc["brake"].GetBool();
-	else if (setDefaults) brake = _BRAKE_;
-	if (!dc["steering"].IsNull()) steering = dc["steering"].GetBool();
-	else if (setDefaults) steering = _STEERING_;
-	if (!dc["speed"].IsNull()) speed = dc["speed"].GetBool();
-	else if (setDefaults) speed = _SPEED_;
-	if (!dc["yawRate"].IsNull()) yawRate = dc["yawRate"].GetBool();
-	else if (setDefaults) yawRate = _YAW_RATE_;
-	if (!dc["drivingMode"].IsNull()) drivingMode = dc["drivingMode"].GetBool();
-	else if (setDefaults) drivingMode = _DRIVING_MODE_;
-	if (!dc["location"].IsNull()) location = dc["location"].GetBool();
-	else if (setDefaults) location = _LOCATION_;
-	if (!dc["time"].IsNull()) time = dc["time"].GetBool();
-	else if (setDefaults) time = _TIME_;
-
+	location = true;
+	time = true;
+	
 	//Create JSON DOM
 	d.SetObject();
 	Document::AllocatorType& allocator = d.GetAllocator();
@@ -154,7 +83,7 @@ void Scenario::buildScenario() {
 
 	GAMEPLAY::SET_RANDOM_SEED(std::time(NULL));
 	while (!PATHFIND::LOAD_ALL_PATH_NODES(TRUE)) WAIT(0);
-	PATHFIND::GET_CLOSEST_VEHICLE_NODE_WITH_HEADING(x, y, 0, &pos, &heading, 0, 0, 0);
+	PATHFIND::GET_CLOSEST_VEHICLE_NODE_WITH_HEADING(x, y, 0, &pos, &heading, 1, 3, 0);
 	PATHFIND::LOAD_ALL_PATH_NODES(FALSE);
 
 	ENTITY::DELETE_ENTITY(&vehicle);
@@ -190,7 +119,7 @@ void Scenario::buildScenario() {
 	else CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0, 0.5, 0.8, TRUE);
 	CAM::SET_CAM_FOV(camera, 60);
 	CAM::SET_CAM_ACTIVE(camera, TRUE);
-	CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z + _cameraYaw, 2);
+	CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z + camera_direction, 2);
 	CAM::SET_CAM_INHERIT_ROLL_VEHICLE(camera, TRUE);
 	CAM::RENDER_SCRIPT_CAMS(TRUE, FALSE, 0, TRUE, TRUE);
 
@@ -198,13 +127,13 @@ void Scenario::buildScenario() {
 	if (_drivingMode >= 0) AI::TASK_VEHICLE_DRIVE_WANDER(ped, vehicle, _setSpeed, _drivingMode);
 }
 
-void Scenario::start(const Value& sc, const Value& dc) {
+void Scenario::start() {
 	if (running) return;
 
 	//Parse options
 	srand(std::time(NULL));
-	parseScenarioConfig(sc, true);
-	parseDatasetConfig(dc, true);
+	parseScenarioConfig();
+	parseDatasetConfig();
 
 	//Build scenario
 	buildScenario();
@@ -213,15 +142,15 @@ void Scenario::start(const Value& sc, const Value& dc) {
 	lastSafetyCheck = std::clock();
 }
 
-void Scenario::config(const Value& sc, const Value& dc) {
+void Scenario::config() {
 	if (!running) return;
 
 	running = false;
 
 	//Parse options
 	srand(std::time(NULL));
-	parseScenarioConfig(sc, false);
-	parseDatasetConfig(dc, false);
+	parseScenarioConfig();
+	parseDatasetConfig();
 
 	//Build scenario
 	buildScenario();
@@ -235,7 +164,7 @@ void Scenario::run() {
 		std::clock_t now = std::clock();
 
 		Vector3 rotation = ENTITY::GET_ENTITY_ROTATION(vehicle, 2);
-		CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z + _cameraYaw, 2);
+		CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z + camera_direction, 2);
 
 		if (_drivingMode < 0) {
 			CONTROLS::_SET_CONTROL_NORMAL(27, 71, currentThrottle); //[0,1]

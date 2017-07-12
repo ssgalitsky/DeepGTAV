@@ -14,7 +14,6 @@
     <ClCompile Include="ScreenCapturer.cpp" />
     <ClCompile Include="script.cpp" />
     <ClCompile Include="Rewarders\SpeedRewarder.cpp" />
-    <ClCompile Include="Server.cpp" />
     <ClCompile Include="lib\tinyxml2.cpp" />
     <ClCompile Include="lib\utils.cpp" />
   </ItemGroup>
@@ -27,7 +26,6 @@
     <ClInclude Include="lib\script.h" />
     <ClInclude Include="Rewarders\SpeedRewarder.h" />
     <ClInclude Include="ScreenCapturer.h" />
-    <ClInclude Include="Server.h" />
     <ClInclude Include="lib\tinyxml2.h" />
     <ClInclude Include="lib\utils.h" />
   </ItemGroup>
@@ -78,7 +76,7 @@
       <AdditionalOptions>lib\ScriptHookV.lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "bin\Release\*" "C:\Program Files\Rockstar Games\Grand Theft Auto V\*"</Command>
+      <Command>copy "bin\Release\*" "E:\Grand Theft Auto V\*"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -12,9 +12,11 @@ BOOL APIENTRY DllMain(HMODULE hInstance, DWORD reason, LPVOID lpReserved)
 	switch (reason)
 	{
 	case DLL_PROCESS_ATTACH:
+		keyboardHandlerRegister(start_run);
 		scriptRegister(hInstance, ScriptMain);
 		break;
 	case DLL_PROCESS_DETACH:
+		keyboardHandlerUnregister(start_run);
 		scriptUnregister(hInstance);
 		break;
 	}		

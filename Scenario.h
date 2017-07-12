@@ -32,7 +32,7 @@ private:
 	const char* _weather;
 	const char* _vehicle;
 	int width, height;
-	float _cameraYaw;
+	float camera_direction;
 
 	bool vehicles;
 	bool peds;
@@ -63,9 +63,9 @@ private:
 public:
 	int rate;
 
-	void start(const Value& sc, const Value& dc);
+	void start();
 	void stop();
-	void config(const Value& sc, const Value& dc);
+	void config();
 	void setCommands(float throttle, float brake, float steering);
 	void run();
 
@@ -73,8 +73,8 @@ public:
 	StringBuffer generateMessage();
 
 private:
-	void parseScenarioConfig(const Value& sc, bool setDefaults);
-	void parseDatasetConfig(const Value& dc, bool setDefaults);
+	void parseScenarioConfig();
+	void parseDatasetConfig();
 	void buildScenario();
 
 	void setVehiclesList();

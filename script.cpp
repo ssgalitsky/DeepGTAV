@@ -5,20 +5,45 @@
 */
 
 #include "lib/script.h"
-#include "Server.h"
+#include "lib/main.h"
+#include "Scenario.h"
 
-void ScriptMain()
-{
-	Server server(8000);
-	while (true) {
-		while (!server.clientConnected) {
-			server.checkClient();
-			scriptWait(0);
+#include <fstream>
+
+bool running = false;
+
+void start_run(DWORD key, WORD repeats, BYTE scanCode, BOOL isExtended, BOOL isWithAlt, BOOL wasDownBefore, BOOL isUpNow) {
+	if (running || key != VK_SPACE) return;
+
+	running = true;
+}
+
+void ScriptMain() {
+	while (true){
+		if (!running){
+			WAIT(0);
+			continue;
 		}
-		while (server.clientConnected) {
-			server.checkRecvMessage();
-			server.checkSendMessage();
-			server.scenario.run();
+
+		std::ofstream stream;
+		stream.open("C:\\Users\\wuhuikai\\Documents\\message.txt");
+		{
+			Scenario scenario;
+			scenario.start();
+			for (int i = 0; i < 100; i++){
+				scenario.run();
+				// Message
+				StringBuffer message = scenario.generateMessage();
+				const char* chmessage = message.GetString();
+				stream << chmessage << std::endl;
+				// Image
+				/*std::ofstream im_stream("image.bin", std::ios::out | std::ios::binary);
+				im_stream.write(buffer, 100);*/
+			}
+			scenario.stop();
 		}
+		stream.close();
+
+		running = false;
 	}
 }
