@@ -127,12 +127,14 @@ void Server::checkSendMessage() {
 	int error;
 	int r;
 
-	if (sendOutputs && (((float)(std::clock() - lastSentMessage) / CLOCKS_PER_SEC) > (1.0 / scenario.rate))) {
+	if (sendOutputs && (((float)(std::clock() - lastSentMessage) / CLOCKS_PER_SEC) > (1.0 / scenario.rate / scenario.total_scenario))) {
 		if (messageSize == 0) {
+			scenario.setScenario(idx);
+			idx++;
 			message = scenario.generateMessage();
 			chmessage = message.GetString();
 			messageSize = message.GetSize();
-		}		
+		}
 
 		if (!frameSent) {
 			if (!readyToSend) {
@@ -193,7 +195,7 @@ void Server::checkSendMessage() {
 			frameSent = false;
 		}
 		lastSentMessage = std::clock();
-	}	
+	}
 }
 
 void Server::resetState() {

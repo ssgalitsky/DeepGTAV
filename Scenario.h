@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <ctime>
+#include <vector>
 
 #include "lib/script.h"
 #include "lib/utils.h"
@@ -28,11 +29,11 @@ private:
 	Vector3 dir;
 
 	float x, y;
-	int hour, minute;
-	const char* _weather;
+	std::vector<int> hours;
+	std::vector<const char*> weathers;
+	std::vector<float> cameraYaws;
 	const char* _vehicle;
 	int width, height;
-	float _cameraYaw;
 
 	bool vehicles;
 	bool peds;
@@ -62,12 +63,14 @@ private:
 
 public:
 	int rate;
+	int total_scenario;
 
 	void start(const Value& sc, const Value& dc);
 	void stop();
 	void config(const Value& sc, const Value& dc);
 	void setCommands(float throttle, float brake, float steering);
 	void run();
+	void setScenario(int idx);
 
 	ScreenCapturer* screenCapturer;
 	StringBuffer generateMessage();

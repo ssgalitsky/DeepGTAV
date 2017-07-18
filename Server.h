@@ -19,6 +19,7 @@ private:
 	int bytesRead = 0;
 	int recvMessageLen = 0;
 	int sendMessageLen = 0;
+	int idx = 0;
 	bool readyToSend = false;
 	bool frameSent = false;
 

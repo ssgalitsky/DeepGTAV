@@ -30,26 +30,39 @@ void Scenario::parseScenarioConfig(const Value& sc, bool setDefaults) {
 		y = 8000 * ((float)rand() / RAND_MAX) - 2000;
 	}
 
+	hours.clear();
 	if (time.IsArray()) {
-		if (!time[0].IsNull()) hour = time[0].GetInt();
-		else if (setDefaults) hour = rand() % 24;
-
-		if (!time[1].IsNull()) minute = time[1].GetInt();
-		else if (setDefaults) minute = rand() % 60;
-	}
-	else if (setDefaults) {
-		hour = rand() % 24;
-		minute = rand() % 60;
+		for (int idx = 0; idx < time.Size(); idx++){
+			hours.push_back(time[idx].GetInt());
+		}
+		if (time.Size() == 0 && setDefaults) hours.push_back(rand() % 24);
+	} else if (setDefaults) {
+		hours.push_back(rand() % 24);
 	}
 
-	if (!weather.IsNull()) _weather = weather.GetString();
-	else if (setDefaults) _weather = weatherList[rand() % 14];
+	weathers.clear();
+	if (weather.IsArray()) {
+		for (int idx = 0; idx < weather.Size(); idx++){
+			weathers.push_back(weather[idx].GetString());
+		}
+		if (weather.Size() == 0 && setDefaults) weathers.push_back(weatherList[rand() % 14]);
+	} else if (setDefaults) {
+		weathers.push_back(weatherList[rand() % 14]);
+	}
 
 	if (!vehicle.IsNull()) _vehicle = vehicle.GetString();
 	else if (setDefaults) _vehicle = vehicleList[rand() % 3];
 
-	if (!cameraYaw.IsNull()) _cameraYaw = - cameraYaw.GetFloat();
-	else if (setDefaults) _cameraYaw = 0;
+	cameraYaws.clear();
+	if (cameraYaw.IsArray()) {
+		for (int idx = 0; idx < cameraYaw.Size(); idx++){
+			cameraYaws.push_back(-cameraYaw[idx].GetFloat());
+		}
+		if (cameraYaw.Size() == 0 && setDefaults) cameraYaws.push_back(0);
+	}
+	else if (setDefaults) {
+		cameraYaws.push_back(0);
+	}
 
 	if (drivingMode.IsArray()) {
 		if (!drivingMode[0].IsNull()) _drivingMode = drivingMode[0].GetInt();
@@ -60,6 +73,8 @@ void Scenario::parseScenarioConfig(const Value& sc, bool setDefaults) {
 	else if (setDefaults) {
 		_drivingMode = -1;
 	}
+
+	total_scenario = hours.size()*weathers.size()*cameraYaws.size();
 }
 
 void Scenario::parseDatasetConfig(const Value& dc, bool setDefaults) {
@@ -179,10 +194,6 @@ void Scenario::buildScenario() {
 	PED::SET_PED_INTO_VEHICLE(ped, vehicle, -1);
 	STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(vehicleHash);
 
-	TIME::SET_CLOCK_TIME(hour, minute, 0);
-
-	GAMEPLAY::SET_WEATHER_TYPE_NOW_PERSIST((char*)_weather);
-
 	rotation = ENTITY::GET_ENTITY_ROTATION(vehicle, 2);
 	CAM::DESTROY_ALL_CAMS(TRUE);
 	camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
@@ -190,7 +201,7 @@ void Scenario::buildScenario() {
 	else CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0, 0.5, 0.8, TRUE);
 	CAM::SET_CAM_FOV(camera, 60);
 	CAM::SET_CAM_ACTIVE(camera, TRUE);
-	CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z + _cameraYaw, 2);
+	CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 2);
 	CAM::SET_CAM_INHERIT_ROLL_VEHICLE(camera, TRUE);
 	CAM::RENDER_SCRIPT_CAMS(TRUE, FALSE, 0, TRUE, TRUE);
 
@@ -234,9 +245,6 @@ void Scenario::run() {
 	if (running) {
 		std::clock_t now = std::clock();
 
-		Vector3 rotation = ENTITY::GET_ENTITY_ROTATION(vehicle, 2);
-		CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z + _cameraYaw, 2);
-
 		if (_drivingMode < 0) {
 			CONTROLS::_SET_CONTROL_NORMAL(27, 71, currentThrottle); //[0,1]
 			CONTROLS::_SET_CONTROL_NORMAL(27, 72, currentBrake); //[0,1]
@@ -272,6 +280,25 @@ void Scenario::run() {
 		}
 	}
 	scriptWait(0);
+}
+
+void Scenario::setScenario(int idx) {
+	int h_len = hours.size();
+	int w_len = weathers.size();
+	int y_len = cameraYaws.size();
+
+	idx %= total_scenario;
+
+	int hour = hours[idx/(w_len*y_len)];
+	TIME::SET_CLOCK_TIME(hour, 0, 0);
+	
+	idx %= (w_len*y_len);
+	const char* weather = weathers[idx/y_len];
+	GAMEPLAY::SET_WEATHER_TYPE_NOW_PERSIST((char*)weather);
+	
+	float cameraYaw = cameraYaws[idx%y_len];
+	Vector3 rotation = ENTITY::GET_ENTITY_ROTATION(vehicle, 2);
+	CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z + cameraYaw, 2);
 }
 
 void Scenario::stop() {
